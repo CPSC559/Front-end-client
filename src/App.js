@@ -1,12 +1,23 @@
 import React, { useEffect, useState, useRef } from "react";
-import io from "socket.io-client";
 import SecureMessaging from "./components/SecureMessaging";
 import JoinChatroom from "./components/JoinChatroom";
 import NewChatroom from "./components/NewChatroom";
+import {
+  generateKeyPair,
+} from "./secure";
 
 function App() {
   const [isInRoom, setIsInRoom] = useState(false);
+  const [keyPair, setKeyPair] = useState();
 
+  useEffect(() => {
+    //Key stuff
+    // TODO: load pre-exisitng key pair or generate and save it
+    generateKeyPair().then((keys) => {
+      setKeyPair(keys);
+    });
+
+  }, [])
   return (
     <div className="App">
       <h1>Hush Haven</h1>
@@ -14,12 +25,12 @@ function App() {
       {
         isInRoom ? 
           (
-            <SecureMessaging/> 
+            <SecureMessaging {...{keyPair}}/> 
           ) : 
           (
             <div>
-              <NewChatroom {...{setIsInRoom}}/>
-              <JoinChatroom {...{setIsInRoom}}/>
+              <NewChatroom {...{setIsInRoom, keyPair}}/>
+              <JoinChatroom {...{setIsInRoom, keyPair}}/>
             </div>
           )
       }

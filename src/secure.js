@@ -42,19 +42,24 @@ async function sendEncryptedMessage(message, publicKeys) {
   const symmetricKey = generateSymmetricKey();
   const encryptedMessage = encryptMessage(message, symmetricKey);
 
-  // Sending the encrypted data to each recipient
+  // Sending the encrypted data to each recipient\
+
+  //make dictionary with foreach loop
   publicKeys.forEach((publicKey) => {
     // encrypt the symmetric key
     const encryptedSymmetricKey = encryptSymmetricKey(symmetricKey, publicKey);
 
-    // Logging encryptedSymmetricKey, nonce, ciphertext, and mac for each recipient (placeholder for sending)
-    console.log("Sending to recipient:", publicKey);
-    console.log("Encrypted Symmetric Key:", encryptedSymmetricKey);
-    console.log("Nonce:", encryptedMessage.nonce);
-    console.log("Ciphertext:", encryptedMessage.ciphertext);
-    console.log("MAC:", encryptedMessage.mac);
+    console.log("Sending to recipient:", publicKey); //who are we sending to?
+    console.log("Encrypted Symmetric Key:", encryptedSymmetricKey); //this is needed to decrypt
+    
     console.log("\n");
   });
+
+  //send all data
+  
+  console.log("Nonce:", encryptedMessage.nonce);
+  console.log("Ciphertext:", encryptedMessage.ciphertext);
+  console.log("MAC:", encryptedMessage.mac);
 }
 
 async function decryptReceivedMessage(encryptedData, privateKey) {

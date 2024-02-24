@@ -1,34 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import io from "socket.io-client";
+
 import {
-  generateKeyPair,
   sendEncryptedMessage,
   decryptReceivedMessage,
 } from "../secure";
 import MessagesView from './MessagesView';
 import MessageInput from './MessageInput';
 
-const SecureMessaging = () => {
+const SecureMessaging = ({keyPair}) => {
   //Messages state
   const [messages, setMessages] = useState([]); //existing messages
   const [inputMessage, setInputMessage] = useState(""); //input
 
-  //Key state
-  const [keyPair, setKeyPair] = useState();
+  //Public keys
   const [publicKeys, setPublicKeys] = useState(new Set());
 
   //Socket ref
   const socket = useRef(null);
 
   useEffect(() => {
-
-    //Key stuff
-    // TODO: load pre-exisitng key pair or generate and save it
-    generateKeyPair().then((keys) => {
-      setKeyPair(keys);
-    });
-    console.log(keyPair);
-
-    //Socket stuff
+    //Socket setup
     socket.current = io("http://localhost:4000");
 
     socket.current.on("connect", () => {
