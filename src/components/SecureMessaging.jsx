@@ -20,6 +20,8 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
   const socket = useRef(null);
 
   useEffect(() => {
+
+    const publicKey = keyPair.publicKey;
     //Socket setup
     socket.current = io("http://localhost:4000");
 
@@ -30,6 +32,10 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
     socket.current.on("new_message", (message) => {
       console.log("New message received:", message);
       setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    socket.current.emit("register_public_key", (publicKey) => {
+      console.log("Connected to server");
     });
 
     return () => {

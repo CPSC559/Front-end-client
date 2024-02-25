@@ -57,6 +57,9 @@ export async function sendEncryptedMessage(message, publicKeys, currChatroom, pu
     encryptedMessage,
     currChatroom,
   });
+
+  //Temporary bypass to get around encryption problems for prototype
+  encryptedMessage.ciphertext = message;
   axios.post('http://localhost:4000/message', { recipients, encryptedMessage, currChatroom, publicKey })
     .then(response => console.log("Server response:", response.data))
     .catch(error => console.error("Error sending to server:", error));
