@@ -1,6 +1,7 @@
-const sodium = require("libsodium-wrappers");
+import sodium from 'libsodium-wrappers';
+import axios from 'axios';
 
-async function generateKeyPair() {
+export async function generateKeyPair() {
   await sodium.ready;
   return sodium.crypto_box_keypair();
 }
@@ -37,32 +38,31 @@ function decryptMessage({ nonce, ciphertext, mac }, symmetricKey) {
   );
 }
 
-async function sendEncryptedMessage(message, publicKeys) {
+export async function sendEncryptedMessage(message, publicKeys, currChatroom, publicKey) {
   await sodium.ready;
-  const symmetricKey = generateSymmetricKey();
-  const encryptedMessage = encryptMessage(message, symmetricKey);
+  const symmetricKey = await generateSymmetricKey();
+  const encryptedMessage = await encryptMessage(message, symmetricKey);
 
-  // Sending the encrypted data to each recipient\
-
-  //make dictionary with foreach loop
-  publicKeys.forEach((publicKey) => {
-    // encrypt the symmetric key
+  let recipients = Array.from(publicKeys).map((publicKey, index) => {
     const encryptedSymmetricKey = encryptSymmetricKey(symmetricKey, publicKey);
-
-    console.log("Sending to recipient:", publicKey); //who are we sending to?
-    console.log("Encrypted Symmetric Key:", encryptedSymmetricKey); //this is needed to decrypt
-    
-    console.log("\n");
+    return {
+      publicKey: sodium.to_hex(publicKey), // Using the public key as an identifier
+      encryptedSymmetricKey: encryptedSymmetricKey,
+    };
   });
 
-  //send all data
-  
-  console.log("Nonce:", encryptedMessage.nonce);
-  console.log("Ciphertext:", encryptedMessage.ciphertext);
-  console.log("MAC:", encryptedMessage.mac);
+  console.log("Sending the following data to the server:");
+  console.log({
+    recipients,
+    encryptedMessage,
+    currChatroom,
+  });
+  axios.post('http://localhost:4000/message', { recipients, encryptedMessage, currChatroom, publicKey })
+    .then(response => console.log("Server response:", response.data))
+    .catch(error => console.error("Error sending to server:", error));
 }
 
-async function decryptReceivedMessage(encryptedData, privateKey) {
+export async function decryptReceivedMessage(encryptedData, privateKey) {
   await sodium.ready;
   const { nonce, ciphertext, mac, encryptedSymmetricKey } = encryptedData;
 
@@ -74,9 +74,3 @@ async function decryptReceivedMessage(encryptedData, privateKey) {
 
   return decryptedMessage;
 }
-
-module.exports = {
-  generateKeyPair,
-  sendEncryptedMessage,
-  decryptReceivedMessage,
-};

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const NewChatroom = ({ setIsInRoom, keyPair }) => {
+const NewChatroom = ({ setIsInRoom, keyPair, setCurrChatroom }) => {
     const [password, setPassword] = useState('');
 
     const createChatroom = async (event) => {
@@ -14,7 +14,7 @@ const NewChatroom = ({ setIsInRoom, keyPair }) => {
                 password: password,
                 userPubKey: publicKeyBase64,
             });
-            console.log('Chatroom created with password:', response.data); // Adjusted to log response.data
+            setCurrChatroom(response.data.password);
             setIsInRoom(true);
         } catch (error) {
             console.error('Failed to create chatroom:', error.response ? error.response.data : error.message);

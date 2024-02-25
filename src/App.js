@@ -9,6 +9,7 @@ import {
 function App() {
   const [isInRoom, setIsInRoom] = useState(false);
   const [keyPair, setKeyPair] = useState();
+  const [currChatroom, setCurrChatroom] = useState("")
 
   useEffect(() => {
     //Key stuff
@@ -25,12 +26,12 @@ function App() {
       {
         isInRoom ? 
           (
-            <SecureMessaging {...{keyPair}}/> 
+            <SecureMessaging {...{keyPair, currChatroom}}/> 
           ) : 
           (
             <div>
-              <NewChatroom {...{setIsInRoom, keyPair}}/>
-              <JoinChatroom {...{setIsInRoom, keyPair}}/>
+              <NewChatroom {...{setIsInRoom, keyPair, setCurrChatroom}}/>
+              <JoinChatroom {...{setIsInRoom, keyPair, setCurrChatroom}}/>
             </div>
           )
       }

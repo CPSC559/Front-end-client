@@ -8,7 +8,7 @@ import {
 import MessagesView from './MessagesView';
 import MessageInput from './MessageInput';
 
-const SecureMessaging = ({keyPair}) => {
+const SecureMessaging = ({keyPair, currChatroom}) => {
   //Messages state
   const [messages, setMessages] = useState([]); //existing messages
   const [inputMessage, setInputMessage] = useState(""); //input
@@ -45,7 +45,7 @@ const SecureMessaging = ({keyPair}) => {
   };
 
   const sendMessage = async (message) => {
-    await sendEncryptedMessage(message, publicKeys);
+    await sendEncryptedMessage(message, publicKeys, currChatroom, keyPair.publicKey);
   };
 
   const decryptMessage = async (encryptedMessage) => {
