@@ -14,7 +14,7 @@ const NewChatroom = ({ setIsInRoom, keyPair, setCurrChatroom }) => {
                 password: password,
                 userPubKey: publicKeyBase64,
             });
-            setCurrChatroom(response.data.password);
+            setCurrChatroom(response.data.Password);
             setIsInRoom(true);
         } catch (error) {
             console.error('Failed to create chatroom:', error.response ? error.response.data : error.message);

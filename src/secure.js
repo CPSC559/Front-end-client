@@ -44,9 +44,11 @@ export async function sendEncryptedMessage(message, publicKeys, currChatroom, pu
   const encryptedMessage = await encryptMessage(message, symmetricKey);
 
   let recipients = Array.from(publicKeys).map((publicKey, index) => {
+    const publicKeyBase64 = btoa(String.fromCharCode.apply(null, publicKey));
+
     const encryptedSymmetricKey = encryptSymmetricKey(symmetricKey, publicKey);
     return {
-      publicKey: sodium.to_hex(publicKey), // Using the public key as an identifier
+      publicKey: publicKeyBase64,
       encryptedSymmetricKey: encryptedSymmetricKey,
     };
   });
@@ -60,7 +62,13 @@ export async function sendEncryptedMessage(message, publicKeys, currChatroom, pu
 
   //Temporary bypass to get around encryption problems for prototype
   encryptedMessage.ciphertext = message;
-  axios.post('http://localhost:4000/message', { recipients, encryptedMessage, currChatroom, publicKey })
+  const publicKeyBase64 = btoa(String.fromCharCode.apply(null, publicKey));
+  const macBase64 = btoa(String.fromCharCode.apply(null, encryptedMessage.mac));
+  const nonceBase64 = btoa(String.fromCharCode.apply(null, encryptedMessage.nonce));
+  encryptedMessage.nonce = nonceBase64;
+  encryptedMessage.mac = macBase64;
+
+  axios.post('http://localhost:4000/message', { recipients, encryptedMessage, currChatroom, publicKeyBase64 })
     .then(response => console.log("Server response:", response.data))
     .catch(error => console.error("Error sending to server:", error));
 }

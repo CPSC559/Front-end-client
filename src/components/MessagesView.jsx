@@ -6,7 +6,7 @@ const MessagesView = ({messages}) => {
         <>
             <div className="messages">
             {messages.map((message, index) => (
-            <div key={index} className="message">{message}</div>
+            <div key={index} className="message">{message.CipherText}</div>
             ))}
             </div>
         </>

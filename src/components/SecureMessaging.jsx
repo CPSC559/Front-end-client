@@ -21,7 +21,8 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
 
   useEffect(() => {
 
-    const publicKey = keyPair.publicKey;
+    const publicKeyBase64 = btoa(String.fromCharCode.apply(null, keyPair.publicKey));
+
     //Socket setup
     socket.current = io("http://localhost:4000");
 
@@ -34,9 +35,11 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
-    socket.current.emit("register_public_key", (publicKey) => {
+    socket.current.emit("register_public_key", (publicKeyBase64), (response) => {
       console.log("Connected to server");
     });
+    
+    addPublicKey(keyPair.publicKey);
 
     return () => {
       socket.current.off("connect");
