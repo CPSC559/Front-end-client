@@ -1,21 +1,52 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import io from "socket.io-client";
+
 import {
-  generateKeyPair,
   sendEncryptedMessage,
   decryptReceivedMessage,
 } from "../secure";
+import MessagesView from './MessagesView';
+import MessageInput from './MessageInput';
 
-const SecureMessaging = () => {
-  // both these useStates will probably need to be changed to context
-  const [keyPair, setKeyPair] = useState();
+const SecureMessaging = ({keyPair, currChatroom}) => {
+  //Messages state
+  const [messages, setMessages] = useState([]); //existing messages
+  const [inputMessage, setInputMessage] = useState(""); //input
+
+  //Public keys
   const [publicKeys, setPublicKeys] = useState(new Set());
 
+  //Socket ref
+  const socket = useRef(null);
+
   useEffect(() => {
-    // TODO: load pre-exisitng key pair or generate and save it
-    generateKeyPair().then((keys) => {
-      setKeyPair(keys);
+
+    const publicKeyBase64 = btoa(String.fromCharCode.apply(null, keyPair.publicKey));
+
+    //Socket setup
+    socket.current = io("http://localhost:4000");
+
+    socket.current.on("connect", () => {
+      console.log("Connected to server");
     });
-    console.log(keyPair);
+
+    socket.current.on("new_message", (message) => {
+      console.log("New message received:", message);
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    socket.current.emit("register_public_key", (publicKeyBase64), (response) => {
+      console.log("Connected to server");
+    });
+    
+    addPublicKey(keyPair.publicKey);
+
+    return () => {
+      socket.current.off("connect");
+      socket.current.off("new_message");
+      socket.current.disconnect();
+      console.log("Disconnected from server");
+    };
   }, []);
 
   const addPublicKey = (publicKey) => {
@@ -23,16 +54,29 @@ const SecureMessaging = () => {
   };
 
   const sendMessage = async (message) => {
-    await sendEncryptedMessage(message, publicKeys);
+    await sendEncryptedMessage(message, publicKeys, currChatroom, keyPair.publicKey);
   };
 
   const decryptMessage = async (encryptedMessage) => {
     await decryptReceivedMessage(encryptedMessage, keyPair.privateKey);
   };
 
+  const handleMessageInputChange = (e) => {
+    setInputMessage(e.target.value);
+  };
+
+  const handleSubmitMessage = (e) => {
+    e.preventDefault();
+    console.log("Sending message:", inputMessage);
+    
+    sendMessage(inputMessage);
+    setInputMessage(""); // Clear input after sending
+  };
+
   return (
     <div>
-      <h1>Secure Messaging Component</h1>
+      <MessagesView {...{messages}}/>
+      <MessageInput {...{inputMessage, handleMessageInputChange, handleSubmitMessage}}/>
     </div>
   );
 };

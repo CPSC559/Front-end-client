@@ -1,26 +1,40 @@
-import React, { useEffect } from "react";
-import io from "socket.io-client";
+import React, { useEffect, useState, useRef } from "react";
 import SecureMessaging from "./components/SecureMessaging";
+import JoinChatroom from "./components/JoinChatroom";
+import NewChatroom from "./components/NewChatroom";
+import {
+  generateKeyPair,
+} from "./secure";
 
 function App() {
-  useEffect(() => {
-    const socket = io("http://localhost:4000");
+  const [isInRoom, setIsInRoom] = useState(false);
+  const [keyPair, setKeyPair] = useState();
+  const [currChatroom, setCurrChatroom] = useState("")
 
-    socket.on("connect", () => {
-      console.log("Connected to server");
+  useEffect(() => {
+    //Key stuff
+    // TODO: load pre-exisitng key pair or generate and save it
+    generateKeyPair().then((keys) => {
+      setKeyPair(keys);
     });
 
-    return () => {
-      socket.off("connect");
-      socket.disconnect();
-      console.log("Disconnected from server");
-    };
-  }, []); // empty array means run on mount
-
+  }, [])
   return (
     <div className="App">
-      <h1>React App with WebSocket</h1>
-      <SecureMessaging />
+      <h1>Hush Haven</h1>
+      <h2>Anonymous Chatting for University Students</h2>
+      {
+        isInRoom ? 
+          (
+            <SecureMessaging {...{keyPair, currChatroom}}/> 
+          ) : 
+          (
+            <div>
+              <NewChatroom {...{setIsInRoom, keyPair, setCurrChatroom}}/>
+              <JoinChatroom {...{setIsInRoom, keyPair, setCurrChatroom}}/>
+            </div>
+          )
+      }
     </div>
   );
 }
