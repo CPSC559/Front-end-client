@@ -43,6 +43,7 @@ export async function sendEncryptedMessage(message, publicKeys, currChatroom, pu
   const symmetricKey = await generateSymmetricKey();
   const encryptedMessage = await encryptMessage(message, symmetricKey);
 
+  console.log(publicKeys)
   let recipients = Array.from(publicKeys).map((publicKey, index) => {
     const publicKeyBase64 = btoa(String.fromCharCode.apply(null, publicKey));
 

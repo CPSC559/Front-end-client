@@ -35,11 +35,16 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
-    socket.current.emit("register_public_key", (publicKeyBase64), (response) => {
+    socket.current.on("new_public_keys", (res) => {
+      console.log("New Public keys: ", res);
+      res.publicKeys.forEach((key) => {
+        addPublicKey(key)
+      });
+    })
+
+    socket.current.emit("register_public_key", ({publicKey: publicKeyBase64, chatroom: currChatroom}), (response) => {
       console.log("Connected to server");
     });
-    
-    addPublicKey(keyPair.publicKey);
 
     return () => {
       socket.current.off("connect");
