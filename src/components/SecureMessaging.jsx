@@ -38,7 +38,10 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
     socket.current.on("new_public_keys", (res) => {
       console.log("New Public keys: ", res);
       res.publicKeys.forEach((key) => {
-        addPublicKey(key)
+        var buffer = new Uint8Array(key)
+        var fileString= String.fromCharCode.apply(null, buffer)
+        console.log(fileString)
+        addPublicKey(fileString)
       });
     })
 
@@ -72,6 +75,7 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
 
   const handleSubmitMessage = (e) => {
     e.preventDefault();
+    console.log(publicKeys)
     console.log("Sending message:", inputMessage);
     
     sendMessage(inputMessage);
