@@ -11,30 +11,32 @@ function generateSymmetricKey() {
 
 function encryptMessage(message, symmetricKey) {
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
-  const { ciphertext, mac } = sodium.crypto_secretbox_detached(
-    message,
-    nonce,
-    symmetricKey
-  );
+  const cipher = sodium.crypto_secretbox_easy(message, nonce, symmetricKey);
 
-  return { nonce, ciphertext, mac };
+  return { nonce, cipher };
 }
 
 function encryptSymmetricKey(symmetricKey, publicKey) {
   return sodium.crypto_box_seal(symmetricKey, publicKey);
 }
 
-function decryptSymmetricKey(encryptedSymmetricKey, privateKey) {
-  return sodium.crypto_box_seal_open(encryptedSymmetricKey, privateKey);
+function decryptSymmetricKey(encryptedSymmetricKey, keyPair) {
+  return sodium.crypto_box_seal_open(
+    encryptedSymmetricKey,
+    keyPair.publicKey,
+    keyPair.privateKey
+  );
 }
 
-function decryptMessage({ nonce, ciphertext, mac }, symmetricKey) {
-  return sodium.crypto_secretbox_open_detached(
-    ciphertext,
-    mac,
+function decryptMessage(nonce, cipher, symmetricKey) {
+  const decoder = new TextDecoder();
+  const decryptedMessage = sodium.crypto_secretbox_open_easy(
+    cipher,
     nonce,
     symmetricKey
   );
+
+  return decoder.decode(decryptedMessage);
 }
 
 async function sendEncryptedMessage(message, publicKeys) {
@@ -42,36 +44,68 @@ async function sendEncryptedMessage(message, publicKeys) {
   const symmetricKey = generateSymmetricKey();
   const encryptedMessage = encryptMessage(message, symmetricKey);
 
-  // Sending the encrypted data to each recipient
-  publicKeys.forEach((publicKey) => {
-    // encrypt the symmetric key
-    const encryptedSymmetricKey = encryptSymmetricKey(symmetricKey, publicKey);
+  encryptedMessage.recipients = {};
+  const decoder = new TextDecoder();
 
-    // Logging encryptedSymmetricKey, nonce, ciphertext, and mac for each recipient (placeholder for sending)
-    console.log("Sending to recipient:", publicKey);
-    console.log("Encrypted Symmetric Key:", encryptedSymmetricKey);
-    console.log("Nonce:", encryptedMessage.nonce);
-    console.log("Ciphertext:", encryptedMessage.ciphertext);
-    console.log("MAC:", encryptedMessage.mac);
-    console.log("\n");
+  // Sending the encrypted data to each recipient
+  await publicKeys.forEach(async (publicKey) => {
+    // encrypt the symmetric key
+    const decodedPublicKey = decoder.decode(publicKey);
+    encryptedMessage.recipients[decodedPublicKey] = encryptSymmetricKey(
+      symmetricKey,
+      publicKey
+    );
   });
+
+  return serializeEncryptedMessage(encryptedMessage);
 }
 
-async function decryptReceivedMessage(encryptedData, privateKey) {
+async function decryptReceivedMessage(serializedEncryptedMessage, keyPair) {
   await sodium.ready;
-  const { nonce, ciphertext, mac, encryptedSymmetricKey } = encryptedData;
 
-  const symmetricKey = decryptSymmetricKey(encryptedSymmetricKey, privateKey);
+  const encryptedMessage = deserializeEncryptedMessage(
+    serializedEncryptedMessage
+  );
+
+  const symmetricKey = decryptSymmetricKey(
+    encryptedMessage.encryptedSymmetricKey,
+    keyPair
+  );
+
   const decryptedMessage = decryptMessage(
-    { nonce, ciphertext, mac },
+    encryptedMessage.nonce,
+    encryptedMessage.cipher,
     symmetricKey
   );
 
   return decryptedMessage;
 }
 
+function serializeEncryptedMessage(encryptedMessage) {
+  return JSON.stringify(encryptedMessage, (_, value) => {
+    if (value instanceof Uint8Array) {
+      return Array.from(value);
+    }
+    return value;
+  });
+}
+
+function deserializeEncryptedMessage(serializedEncryptedMessage) {
+  return JSON.parse(serializedEncryptedMessage, (_, value) => {
+    if (
+      Array.isArray(value) &&
+      value.every((item) => typeof item === "number")
+    ) {
+      return new Uint8Array(value);
+    }
+    return value;
+  });
+}
+
 module.exports = {
   generateKeyPair,
   sendEncryptedMessage,
   decryptReceivedMessage,
+  serializeEncryptedMessage,
+  deserializeEncryptedMessage,
 };
