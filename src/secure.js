@@ -40,17 +40,18 @@ function decryptMessage({ nonce, ciphertext, mac }, symmetricKey) {
 
 export async function sendEncryptedMessage(message, publicKeys, currChatroom, publicKey) {
   await sodium.ready;
+  console.log(publicKey)
   const symmetricKey = await generateSymmetricKey();
   const encryptedMessage = await encryptMessage(message, symmetricKey);
 
-  console.log(publicKeys)
+  
   let recipients = Array.from(publicKeys).map((publicKey, index) => {
-    const publicKeyBase64 = btoa(String.fromCharCode.apply(null, publicKey));
+    const publicKeyBase64 = btoa(publicKey);
 
-    const encryptedSymmetricKey = encryptSymmetricKey(symmetricKey, publicKey);
+    //const encryptedSymmetricKey = encryptSymmetricKey(symmetricKey, publicKey);
     return {
       publicKey: publicKeyBase64,
-      encryptedSymmetricKey: encryptedSymmetricKey,
+      //encryptedSymmetricKey: encryptedSymmetricKey,
     };
   });
 
