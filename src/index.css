@@ -11,3 +11,46 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.App {
+  text-align: center;
+  max-width: 600px;
+  margin: auto;
+}
+
+.messages {
+  margin: 20px 0;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  height: 300px;
+  overflow-y: auto;
+}
+
+.message {
+  background: #e3f2fd;
+  margin: 8px 0;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.message-form {
+  display: flex;
+  gap: 10px;
+}
+
+.message-input {
+  flex-grow: 1;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.send-button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
