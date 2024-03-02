@@ -29,27 +29,19 @@ function decryptSymmetricKey(encryptedSymmetricKey, keyPair) {
 }
 
 function decryptMessage(nonce, cipher, symmetricKey) {
-  const decoder = new TextDecoder();
-  const decryptedMessage = sodium.crypto_secretbox_open_easy(
-    cipher,
-    nonce,
-    symmetricKey
-  );
-
-  return decoder.decode(decryptedMessage);
+  return sodium.crypto_secretbox_open_easy(cipher, nonce, symmetricKey, "text");
 }
 
 async function sendEncryptedMessage(message, publicKeys) {
   await sodium.ready;
   const symmetricKey = generateSymmetricKey();
-  const encryptedMessage = encryptMessage(message, symmetricKey);
+  let encryptedMessage = encryptMessage(message, symmetricKey);
 
   encryptedMessage.recipients = {};
   const decoder = new TextDecoder();
 
   // Sending the encrypted data to each recipient
-  await publicKeys.forEach(async (publicKey) => {
-    // encrypt the symmetric key
+  publicKeys.forEach((publicKey) => {
     const decodedPublicKey = decoder.decode(publicKey);
     encryptedMessage.recipients[decodedPublicKey] = encryptSymmetricKey(
       symmetricKey,
@@ -92,10 +84,7 @@ function serializeEncryptedMessage(encryptedMessage) {
 
 function deserializeEncryptedMessage(serializedEncryptedMessage) {
   return JSON.parse(serializedEncryptedMessage, (_, value) => {
-    if (
-      Array.isArray(value) &&
-      value.every((item) => typeof item === "number")
-    ) {
+    if (Array.isArray(value)) {
       return new Uint8Array(value);
     }
     return value;
