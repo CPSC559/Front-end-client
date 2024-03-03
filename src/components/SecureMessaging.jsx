@@ -1,28 +1,22 @@
 import React, { useEffect, useState, useRef } from "react";
 import io from "socket.io-client";
 
-import {
-  sendEncryptedMessage,
-  decryptReceivedMessage,
-} from "../secure";
-import MessagesView from './MessagesView';
-import MessageInput from './MessageInput';
+import { sendEncryptedMessage, decryptReceivedMessage } from "../secure";
+import MessagesView from "./MessagesView";
+import MessageInput from "./MessageInput";
 
-const SecureMessaging = ({keyPair, currChatroom}) => {
-  //Messages state
+const SecureMessaging = ({ keyPair, base64PublicKey, currChatroom }) => {
+  // Messages state
   const [messages, setMessages] = useState([]); //existing messages
   const [inputMessage, setInputMessage] = useState(""); //input
 
-  //Public keys
+  // Base64 Public keys of recipients
   const [publicKeys, setPublicKeys] = useState(new Set());
 
-  //Socket ref
+  // Socket ref
   const socket = useRef(null);
 
   useEffect(() => {
-
-    const publicKeyBase64 = btoa(String.fromCharCode.apply(null, keyPair.publicKey));
-
     //Socket setup
     socket.current = io("http://localhost:4000");
 
@@ -30,24 +24,31 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
       console.log("Connected to server");
     });
 
-    socket.current.on("new_message", (message) => {
-      console.log("New message received:", message);
-      setMessages((prevMessages) => [...prevMessages, message]);
+    socket.current.on("new_message", async (res) => {
+      console.log("New message received:", res);
+
+      const decryptedMessage = await decryptReceivedMessage(
+        res.serializedEncryptedMessage,
+        res.serializedEncryptedSymmetricKey,
+        keyPair
+      );
+
+      console.log("new_message - decryptedMessage: ", decryptedMessage);
+
+      setMessages((prevMessages) => [...prevMessages, decryptedMessage]);
     });
 
     socket.current.on("new_public_keys", (res) => {
-      console.log("New Public keys: ", res);
-      res.publicKeys.forEach((key) => {
-        var buffer = new Uint8Array(key)
-        var fileString= String.fromCharCode.apply(null, buffer)
-        console.log(fileString)
-        addPublicKey(fileString)
-      });
-    })
-
-    socket.current.emit("register_public_key", ({publicKey: publicKeyBase64, chatroom: currChatroom}), (response) => {
-      console.log("Connected to server");
+      setPublicKeys((prevKeys) => new Set([...prevKeys, ...res.publicKeys]));
     });
+
+    socket.current.emit(
+      "register_public_key",
+      { publicKey: base64PublicKey, chatroom: currChatroom },
+      (response) => {
+        console.log("Connected to server");
+      }
+    );
 
     return () => {
       socket.current.off("connect");
@@ -57,16 +58,13 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
     };
   }, []);
 
-  const addPublicKey = (publicKey) => {
-    setPublicKeys((prevKeys) => new Set([...prevKeys, publicKey]));
-  };
-
   const sendMessage = async (message) => {
-    await sendEncryptedMessage(message, publicKeys, currChatroom, keyPair.publicKey);
-  };
-
-  const decryptMessage = async (encryptedMessage) => {
-    await decryptReceivedMessage(encryptedMessage, keyPair.privateKey);
+    return await sendEncryptedMessage(
+      message,
+      publicKeys,
+      currChatroom,
+      base64PublicKey
+    );
   };
 
   const handleMessageInputChange = (e) => {
@@ -75,17 +73,19 @@ const SecureMessaging = ({keyPair, currChatroom}) => {
 
   const handleSubmitMessage = (e) => {
     e.preventDefault();
-    console.log(publicKeys)
+    console.log(publicKeys);
     console.log("Sending message:", inputMessage);
-    
+
     sendMessage(inputMessage);
     setInputMessage(""); // Clear input after sending
   };
 
   return (
     <div>
-      <MessagesView {...{messages}}/>
-      <MessageInput {...{inputMessage, handleMessageInputChange, handleSubmitMessage}}/>
+      <MessagesView {...{ messages }} />
+      <MessageInput
+        {...{ inputMessage, handleMessageInputChange, handleSubmitMessage }}
+      />
     </div>
   );
 };

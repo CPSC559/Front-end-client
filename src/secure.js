@@ -1,5 +1,9 @@
-import sodium from 'libsodium-wrappers';
-import axios from 'axios';
+import sodium from "libsodium-wrappers";
+import axios from "axios";
+import {
+  serializeUint8ArrayObject,
+  deserializeUint8ArrayObject,
+} from "./serializationUtils";
 
 export async function generateKeyPair() {
   await sodium.ready;
@@ -12,76 +16,85 @@ function generateSymmetricKey() {
 
 function encryptMessage(message, symmetricKey) {
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
-  const { ciphertext, mac } = sodium.crypto_secretbox_detached(
-    message,
-    nonce,
-    symmetricKey
-  );
+  const cipher = sodium.crypto_secretbox_easy(message, nonce, symmetricKey);
 
-  return { nonce, ciphertext, mac };
+  return { nonce, cipher };
 }
 
 function encryptSymmetricKey(symmetricKey, publicKey) {
   return sodium.crypto_box_seal(symmetricKey, publicKey);
 }
 
-function decryptSymmetricKey(encryptedSymmetricKey, privateKey) {
-  return sodium.crypto_box_seal_open(encryptedSymmetricKey, privateKey);
-}
-
-function decryptMessage({ nonce, ciphertext, mac }, symmetricKey) {
-  return sodium.crypto_secretbox_open_detached(
-    ciphertext,
-    mac,
-    nonce,
-    symmetricKey
+function decryptSymmetricKey(encryptedSymmetricKey, keyPair) {
+  return sodium.crypto_box_seal_open(
+    encryptedSymmetricKey,
+    keyPair.publicKey,
+    keyPair.privateKey
   );
 }
 
-export async function sendEncryptedMessage(message, publicKeys, currChatroom, publicKey) {
-  await sodium.ready;
-  console.log(publicKey)
-  const symmetricKey = await generateSymmetricKey();
-  const encryptedMessage = await encryptMessage(message, symmetricKey);
-
-  
-  let recipients = Array.from(publicKeys).map((publicKey, index) => {
-    const publicKeyBase64 = btoa(publicKey);
-
-    //const encryptedSymmetricKey = encryptSymmetricKey(symmetricKey, publicKey);
-    return {
-      publicKey: publicKeyBase64,
-      //encryptedSymmetricKey: encryptedSymmetricKey,
-    };
-  });
-
-  console.log("Sending the following data to the server:");
-  console.log({
-    recipients,
-    encryptedMessage,
-    currChatroom,
-  });
-
-  //Temporary bypass to get around encryption problems for prototype
-  encryptedMessage.ciphertext = message;
-  const publicKeyBase64 = btoa(String.fromCharCode.apply(null, publicKey));
-  const macBase64 = btoa(String.fromCharCode.apply(null, encryptedMessage.mac));
-  const nonceBase64 = btoa(String.fromCharCode.apply(null, encryptedMessage.nonce));
-  encryptedMessage.nonce = nonceBase64;
-  encryptedMessage.mac = macBase64;
-
-  axios.post('http://localhost:4000/message', { recipients, encryptedMessage, currChatroom, publicKeyBase64 })
-    .then(response => console.log("Server response:", response.data))
-    .catch(error => console.error("Error sending to server:", error));
+function decryptMessage(nonce, cipher, symmetricKey) {
+  return sodium.crypto_secretbox_open_easy(cipher, nonce, symmetricKey, "text");
 }
 
-export async function decryptReceivedMessage(encryptedData, privateKey) {
+export async function sendEncryptedMessage(
+  message,
+  publicKeys,
+  currChatroom,
+  senderBase64PublicKey
+) {
   await sodium.ready;
-  const { nonce, ciphertext, mac, encryptedSymmetricKey } = encryptedData;
+  const symmetricKey = generateSymmetricKey();
+  const encryptedMessage = encryptMessage(message, symmetricKey);
 
-  const symmetricKey = decryptSymmetricKey(encryptedSymmetricKey, privateKey);
+  let recipients = {};
+
+  // Sending the encrypted data to each recipient
+  publicKeys.forEach((publicKey) => {
+    recipients[publicKey] = encryptSymmetricKey(
+      symmetricKey,
+      sodium.from_base64(publicKey)
+    );
+  });
+
+  const serializedEncryptedMessage =
+    serializeUint8ArrayObject(encryptedMessage);
+
+  const serializedRecipients = serializeUint8ArrayObject(recipients);
+
+  axios
+    .post("http://localhost:4000/message", {
+      cipher: serializedEncryptedMessage,
+      recipients: serializedRecipients,
+      currChatroom,
+      senderBase64PublicKey,
+    })
+    .then((response) => console.log("Server response:", response.data))
+    .catch((error) => console.error("Error sending to server:", error));
+
+  return serializedEncryptedMessage;
+}
+
+export async function decryptReceivedMessage(
+  serializedEncryptedMessage,
+  serializedEncryptedSymmetricKey,
+  keyPair
+) {
+  await sodium.ready;
+
+  const encryptedMessage = deserializeUint8ArrayObject(
+    serializedEncryptedMessage
+  );
+
+  const encryptedSymmetricKey = deserializeUint8ArrayObject(
+    serializedEncryptedSymmetricKey
+  );
+
+  const symmetricKey = decryptSymmetricKey(encryptedSymmetricKey, keyPair);
+
   const decryptedMessage = decryptMessage(
-    { nonce, ciphertext, mac },
+    encryptedMessage.nonce,
+    encryptedMessage.cipher,
     symmetricKey
   );
 
