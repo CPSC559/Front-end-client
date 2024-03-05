@@ -4,12 +4,14 @@ import JoinChatroom from "./components/JoinChatroom";
 import NewChatroom from "./components/NewChatroom";
 import { generateKeyPair } from "./secure";
 import sodium from "libsodium-wrappers";
+import {PRIMARY_SERVER, BACKUP_SERVER} from './constants.js';
 
 function App() {
   const [isInRoom, setIsInRoom] = useState(false);
   const [keyPair, setKeyPair] = useState();
   const [currChatroom, setCurrChatroom] = useState("");
   const [base64PublicKey, setBase64PublicKey] = useState();
+  const [server, setServer] = useState(PRIMARY_SERVER);
 
   useEffect(() => {
     //Key stuff
@@ -25,7 +27,7 @@ function App() {
       <h1>Hush Haven</h1>
       <h2>Anonymous Chatting for University Students</h2>
       {isInRoom ? (
-        <SecureMessaging {...{ keyPair, base64PublicKey, currChatroom }} />
+        <SecureMessaging {...{ keyPair, base64PublicKey, currChatroom, server, setServer }} />
       ) : (
         <div>
           <NewChatroom
@@ -33,6 +35,8 @@ function App() {
               setIsInRoom,
               base64PublicKey,
               setCurrChatroom,
+              server,
+              setServer
             }}
           />
           <JoinChatroom
@@ -40,6 +44,8 @@ function App() {
               setIsInRoom,
               base64PublicKey,
               setCurrChatroom,
+              server,
+              setServer
             }}
           />
         </div>

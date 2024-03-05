@@ -41,7 +41,8 @@ export async function sendEncryptedMessage(
   message,
   publicKeys,
   currChatroom,
-  senderBase64PublicKey
+  senderBase64PublicKey,
+  server
 ) {
   await sodium.ready;
   const symmetricKey = generateSymmetricKey();
@@ -63,7 +64,7 @@ export async function sendEncryptedMessage(
   const serializedRecipients = serializeUint8ArrayObject(recipients);
 
   axios
-    .post("http://localhost:4000/message", {
+    .post(`${server}/message`, {
       cipher: serializedEncryptedMessage,
       recipients: serializedRecipients,
       currChatroom,
