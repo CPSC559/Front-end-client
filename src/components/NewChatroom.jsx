@@ -1,15 +1,25 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { BACKUP_SERVER, PRIMARY_SERVER } from '../constants';
+import { BACKUP_SERVER1, BACKUP_SERVER2, PRIMARY_SERVER } from "../constants";
 
-const NewChatroom = ({ setIsInRoom, base64PublicKey, setCurrChatroom, server, setServer }) => {
+const NewChatroom = ({
+  setIsInRoom,
+  base64PublicKey,
+  setCurrChatroom,
+  server,
+  setServer,
+}) => {
   const [password, setPassword] = useState("");
 
   // Updated to accept currentServer parameter
-  const createChatroom = async (event, isRetry = false, currentServer = server) => {
+  const createChatroom = async (
+    event,
+    isRetry = false,
+    currentServer = server
+  ) => {
     event.preventDefault();
 
-    try {      
+    try {
       const response = await axios.post(`${currentServer}/chatroom`, {
         password: password,
         userPubKey: base64PublicKey,
@@ -21,14 +31,22 @@ const NewChatroom = ({ setIsInRoom, base64PublicKey, setCurrChatroom, server, se
         "Failed to create chatroom:",
         error.response ? error.response.data : error.message
       );
-      if (!isRetry) { // Only attempt a retry if this is the first attempt
-        const newServer = currentServer === PRIMARY_SERVER ? BACKUP_SERVER : PRIMARY_SERVER;
-        console.log(`Switching to ${newServer === PRIMARY_SERVER ? 'primary' : 'backup'} server...`);
+      if (!isRetry) {
+        // Only attempt a retry if this is the first attempt
+        let newServer;
+        if (currentServer === PRIMARY_SERVER) {
+          newServer = BACKUP_SERVER1;
+        } else if (currentServer === BACKUP_SERVER1) {
+          newServer = BACKUP_SERVER2;
+        } else {
+          newServer = PRIMARY_SERVER;
+        }
+        console.log(`Switching to the ${newServer} server...`);
         setServer(newServer); // Update the server state for future requests
         createChatroom(event, true, newServer); // Pass newServer directly
       } else {
         // If retry also failed, notify the user
-        alert("Both primary and backup servers are unavailable. Please try again later.");
+        alert("All servers are unavailable. Please try again later.");
       }
     }
   };

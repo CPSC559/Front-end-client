@@ -1,11 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
 import io from "socket.io-client";
-import { BACKUP_SERVER, PRIMARY_SERVER } from '../constants';
+import { BACKUP_SERVER1, BACKUP_SERVER2, PRIMARY_SERVER } from "../constants";
 import { sendEncryptedMessage, decryptReceivedMessage } from "../secure";
 import MessagesView from "./MessagesView";
 import MessageInput from "./MessageInput";
 
-const SecureMessaging = ({ keyPair, base64PublicKey, currChatroom, server, setServer }) => {
+const SecureMessaging = ({
+  keyPair,
+  base64PublicKey,
+  currChatroom,
+  server,
+  setServer,
+}) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [publicKeys, setPublicKeys] = useState(new Set());
@@ -16,6 +22,7 @@ const SecureMessaging = ({ keyPair, base64PublicKey, currChatroom, server, setSe
       socket.current.disconnect();
     }
 
+    let pingInterval;
     socket.current = io(serverUrl, { reconnectionAttempts: 3 });
 
     socket.current.on("connect", () => {
@@ -27,14 +34,20 @@ const SecureMessaging = ({ keyPair, base64PublicKey, currChatroom, server, setSe
           console.log("Registration response:", response);
         }
       );
+
+      // Keep the connection alive by pinging the server every 5 seconds
+      pingInterval = setInterval(() => {
+        socket.current.emit("ping", {}, (response) => {
+          if (response !== "pong") {
+            attemptBackupConnection(serverUrl);
+          }
+        });
+      }, 5000);
     });
 
     socket.current.on("connect_error", () => {
       if (attemptBackup) {
-        console.log(`Failed to connect to ${serverUrl}. Attempting backup server...`);
-        const backupServer = serverUrl === PRIMARY_SERVER ? BACKUP_SERVER : PRIMARY_SERVER;
-        setServer(backupServer);
-        connectSocket(backupServer, false);
+        attemptBackupConnection(serverUrl);
       } else {
         console.log("Failed to connect to both primary and backup servers.");
       }
@@ -63,6 +76,7 @@ const SecureMessaging = ({ keyPair, base64PublicKey, currChatroom, server, setSe
       socket.current.off("new_message");
       socket.current.off("new_public_keys");
       socket.current.disconnect();
+      clearInterval(pingInterval);
     };
   };
 
@@ -90,6 +104,25 @@ const SecureMessaging = ({ keyPair, base64PublicKey, currChatroom, server, setSe
     console.log("Sending message:", inputMessage);
     sendMessage(inputMessage);
     setInputMessage(""); // Clear input after sending
+  };
+
+  const attemptBackupConnection = (serverUrl) => {
+    console.log(
+      `Failed to connect to ${serverUrl}. Attempting backup server...`
+    );
+
+    let backupServer;
+    if (serverUrl === PRIMARY_SERVER) {
+      backupServer = BACKUP_SERVER1;
+    } else if (serverUrl === BACKUP_SERVER1) {
+      backupServer = BACKUP_SERVER2;
+    } else {
+      console.log("Failed to connect to all servers.");
+      return;
+    }
+
+    setServer(backupServer);
+    connectSocket(backupServer, false);
   };
 
   return (
