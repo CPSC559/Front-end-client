@@ -4,7 +4,7 @@ import JoinChatroom from "./components/JoinChatroom";
 import NewChatroom from "./components/NewChatroom";
 import { generateKeyPair } from "./secure";
 import sodium from "libsodium-wrappers";
-import {PRIMARY_SERVER, BACKUP_SERVER} from './constants.js';
+import {PRIMARY_SERVER, BACKUP_SERVER1, BACKUP_SERVER2} from './constants.js';
 
 function App() {
   const [isInRoom, setIsInRoom] = useState(false);
