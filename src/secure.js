@@ -69,6 +69,7 @@ export async function sendEncryptedMessage(
       recipients: serializedRecipients,
       currChatroom,
       senderBase64PublicKey,
+      fromClient: true,
     })
     .then((response) => console.log("Server response:", response.data))
     .catch((error) => console.error("Error sending to server:", error));

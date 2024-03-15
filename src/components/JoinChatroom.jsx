@@ -24,6 +24,7 @@ const JoinChatroom = ({
         params: {
           Password: password,
           publicKey: base64PublicKey,
+          fromClient: true,
         },
       });
       console.log(response.data);

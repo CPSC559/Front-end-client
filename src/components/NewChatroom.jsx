@@ -23,6 +23,7 @@ const NewChatroom = ({
       const response = await axios.post(`${currentServer}/chatroom`, {
         password: password,
         userPubKey: base64PublicKey,
+        fromClient: true,
       });
       setCurrChatroom(response.data.Password); // Ensure this matches your actual response structure
       setIsInRoom(true);
