@@ -1,17 +1,20 @@
 import React from "react";
 
-const MessagesView = ({ messages }) => {
+const MessagesView = ({ messages, clientColors }) => {
   return (
-    <>
-      <div className="messages">
-        {messages.map((message, index) => (
-          <div key={index} className="message">
-            {message}
-          </div>
-        ))}
-      </div>
-    </>
+    <div className="messages">
+      {messages.map((messageObj, index) => (
+        <div
+          key={index}
+          className="message"
+          style={{ backgroundColor: clientColors[messageObj.senderPublicKey] }}
+        >
+          {messageObj.message}
+        </div>
+      ))}
+    </div>
   );
 };
+
 
 export default MessagesView;
