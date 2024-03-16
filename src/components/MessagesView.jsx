@@ -1,13 +1,13 @@
 import React from "react";
 
-const MessagesView = ({ messages, clientColors }) => {
+const MessagesView = ({ messages }) => {
   return (
     <div className="messages">
       {messages.map((messageObj, index) => (
         <div
           key={index}
           className="message"
-          style={{ backgroundColor: clientColors[messageObj.senderPublicKey] }}
+          style={{ backgroundColor: messageObj.clientColor }}
         >
           {messageObj.message}
         </div>
@@ -15,6 +15,5 @@ const MessagesView = ({ messages, clientColors }) => {
     </div>
   );
 };
-
 
 export default MessagesView;

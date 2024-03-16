@@ -15,7 +15,6 @@ const SecureMessaging = ({
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [publicKeys, setPublicKeys] = useState(new Set());
-  const [clientColors, setClientColors] = useState({});
   const socket = useRef(null);
 
   const connectSocket = (serverUrl, attemptBackup = true) => {
@@ -65,9 +64,9 @@ const SecureMessaging = ({
 
       console.log("Decrypted Message: ", decryptedMessage);
     
-      const messageWithSender = { message: decryptedMessage, senderPublicKey: res.senderBase64PublicKey };
+      const newMessage = { message: decryptedMessage, clientColor: res.clientColor };
     
-      setMessages((prevMessages) => [...prevMessages, messageWithSender]);
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
     socket.current.on("new_public_keys", (res) => {
@@ -95,9 +94,10 @@ const SecureMessaging = ({
       publicKeys,
       currChatroom,
       base64PublicKey,
-      server
+      server,
     );
   };
+  
 
   const handleMessageInputChange = (e) => {
     setInputMessage(e.target.value);
@@ -129,35 +129,9 @@ const SecureMessaging = ({
     connectSocket(backupServer, false);
   };
 
-  const generateColor = (publicKey) => {
-    // Calculate a hash code to create a color from the public key
-    const hashCode = publicKey.split("").reduce((a, b) => {
-      a = (a << 5) - a + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-  
-    const hue = hashCode % 360;
-  
-    return `hsl(${hue}, 70%, 90%)`;
-  };
-  
-  useEffect(() => {
-    setClientColors((prevColors) => {
-      const newColors = {};
-
-      publicKeys.forEach((key) => {
-        if (!prevColors[key]) {
-          newColors[key] = generateColor(key);
-        }
-      });
-
-      return { ...prevColors, ...newColors };
-    });
-  }, [publicKeys]);
-
   return (
     <div>
-      <MessagesView messages={messages} clientColors={clientColors} />
+      <MessagesView messages={messages} />
       <MessageInput
         inputMessage={inputMessage}
         handleMessageInputChange={handleMessageInputChange}
