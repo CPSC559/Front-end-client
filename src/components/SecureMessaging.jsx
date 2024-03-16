@@ -55,7 +55,7 @@ const SecureMessaging = ({
 
     socket.current.on("new_message", async (res) => {
       console.log("New message received:", res);
-    
+
       const decryptedMessage = await decryptReceivedMessage(
         res.serializedEncryptedMessage,
         res.serializedEncryptedSymmetricKey,
@@ -94,10 +94,9 @@ const SecureMessaging = ({
       publicKeys,
       currChatroom,
       base64PublicKey,
-      server,
+      server
     );
   };
-  
 
   const handleMessageInputChange = (e) => {
     setInputMessage(e.target.value);
