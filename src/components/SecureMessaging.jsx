@@ -63,7 +63,10 @@ const SecureMessaging = ({
       );
 
       console.log("Decrypted Message: ", decryptedMessage);
-      setMessages((prevMessages) => [...prevMessages, decryptedMessage]);
+    
+      const newMessage = { message: decryptedMessage, clientColor: res.clientColor };
+    
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
     socket.current.on("new_public_keys", (res) => {
