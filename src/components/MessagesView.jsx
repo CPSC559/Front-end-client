@@ -6,7 +6,7 @@ const MessagesView = ({ messages }) => {
       <div className="messages">
         {messages.map((message, index) => (
           <div key={index} className="message">
-            {message}
+            {message.decryptedMessage}
           </div>
         ))}
       </div>

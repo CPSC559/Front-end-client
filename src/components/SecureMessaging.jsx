@@ -56,14 +56,17 @@ const SecureMessaging = ({
     socket.current.on("new_message", async (res) => {
       console.log("New message received:", res);
 
+      const messageIndex = res.messageIndex;
       const decryptedMessage = await decryptReceivedMessage(
         res.serializedEncryptedMessage,
         res.serializedEncryptedSymmetricKey,
         keyPair
       );
 
+      console.log("Message Index: ", messageIndex);
       console.log("Decrypted Message: ", decryptedMessage);
-      setMessages((prevMessages) => [...prevMessages, decryptedMessage]);
+
+      setMessages((prevMessages) => [...prevMessages, {messageIndex, decryptedMessage}].sort((a, b) => a.messageIndex - b.messageIndex));
     });
 
     socket.current.on("new_public_keys", (res) => {
