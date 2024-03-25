@@ -64,9 +64,9 @@ const SecureMessaging = ({
 
       console.log("Decrypted Message: ", decryptedMessage);
     
-      const newMessage = { message: decryptedMessage, clientColor: res.clientColor };
+      const newMessage = { messageIndex: res.messageIndex, message: decryptedMessage, clientColor: res.clientColor };
     
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      setMessages((prevMessages) => [...prevMessages, newMessage].sort((a, b) => a.messageIndex - b.messageIndex)));
     });
 
     socket.current.on("new_public_keys", (res) => {
