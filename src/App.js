@@ -12,6 +12,7 @@ function App() {
   const [currChatroom, setCurrChatroom] = useState("");
   const [base64PublicKey, setBase64PublicKey] = useState();
   const [server, setServer] = useState(PRIMARY_SERVER);
+  const [showRoomCode, setShowRoomCode] = useState(false);
 
   useEffect(() => {
     //Key stuff
@@ -27,7 +28,21 @@ function App() {
       <h1>Hush Haven</h1>
       <h2>Anonymous Chatting for University Students</h2>
       {isInRoom ? (
-        <SecureMessaging {...{ keyPair, base64PublicKey, currChatroom, server, setServer }} />
+        <>
+          <h3>
+            {"Room Code: "}
+            {showRoomCode ? (
+              <>
+                <span style={{ backgroundColor: "yellow" }}>{currChatroom}</span>
+                &nbsp;
+              </>
+            ) : ("")}
+            <button onClick={() => setShowRoomCode(!showRoomCode)}>
+              {showRoomCode ? ("Hide") : ("Show")}
+            </button>
+          </h3>
+          <SecureMessaging {...{ keyPair, base64PublicKey, currChatroom, server, setServer }} />
+        </>
       ) : (
         <div>
           <NewChatroom
