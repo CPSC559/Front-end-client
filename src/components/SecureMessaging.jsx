@@ -23,7 +23,7 @@ const SecureMessaging = ({
     }
 
     let pingInterval;
-    socket.current = io(serverUrl, { reconnectionAttempts: 3 });
+    socket.current = io(serverUrl, { reconnectionAttempts: 15 });
 
     socket.current.on("connect", () => {
       console.log("Connected to server:", serverUrl);
@@ -44,7 +44,13 @@ const SecureMessaging = ({
         });
       }, 5000);
     });
-
+    socket.current.on("disconnect", () => {
+      if (attemptBackup) {
+        attemptBackupConnection(serverUrl);
+      } else {
+        console.log("Failed to connect to both primary and backup servers.");
+      }
+    });
     socket.current.on("connect_error", () => {
       if (attemptBackup) {
         attemptBackupConnection(serverUrl);
@@ -119,7 +125,11 @@ const SecureMessaging = ({
       backupServer = BACKUP_SERVER1;
     } else if (serverUrl === BACKUP_SERVER1) {
       backupServer = BACKUP_SERVER2;
-    } else {
+    }
+      else if(serverUrl ==BACKUP_SERVER2){
+        backupServer = PRIMARY_SERVER;
+      }
+       else {
       console.log("Failed to connect to all servers.");
       return;
     }
