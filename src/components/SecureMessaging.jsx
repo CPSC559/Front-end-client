@@ -70,7 +70,7 @@ const SecureMessaging = ({
 
       console.log("Decrypted Message: ", decryptedMessage);
     
-      const newMessage = { messageIndex: res.messageIndex, message: decryptedMessage, clientColor: res.clientColor };
+      const newMessage = { messageIndex: res.messageIndex, message: decryptedMessage, clientColor: res.clientColor, userName: res.userName};
     
       setMessages((prevMessages) => [...prevMessages, newMessage].sort((a, b) => a.messageIndex - b.messageIndex));
     });

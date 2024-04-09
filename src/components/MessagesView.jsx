@@ -1,4 +1,5 @@
 import React from "react";
+import "./MessagesView.css";
 
 const MessagesView = ({ messages }) => {
   return (
@@ -9,7 +10,8 @@ const MessagesView = ({ messages }) => {
           className="message"
           style={{ backgroundColor: messageObj.clientColor }}
         >
-          {messageObj.message}
+          <div className="username"> {messageObj.userName}</div>
+          <div className="message-content"> {messageObj.message}</div>
         </div>
       ))}
     </div>
