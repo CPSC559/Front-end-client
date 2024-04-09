@@ -5,6 +5,7 @@ import { sendEncryptedMessage, decryptReceivedMessage } from "../secure";
 import MessagesView from "./MessagesView";
 import MessageInput from "./MessageInput";
 
+// Component for sending and receiving messages (composed of MessagesView and MessageInput)
 const SecureMessaging = ({
   keyPair,
   base64PublicKey,
@@ -17,6 +18,7 @@ const SecureMessaging = ({
   const [publicKeys, setPublicKeys] = useState(new Set());
   const socket = useRef(null);
 
+  // Connect to the server
   const connectSocket = (serverUrl, attemptBackup = true) => {
     if (socket.current) {
       socket.current.disconnect();
@@ -25,6 +27,7 @@ const SecureMessaging = ({
     let pingInterval;
     socket.current = io(serverUrl, { reconnectionAttempts: 15 });
 
+    // Register a public key for this user
     socket.current.on("connect", () => {
       console.log("Connected to server:", serverUrl);
       socket.current.emit(
@@ -44,6 +47,8 @@ const SecureMessaging = ({
         });
       }, 5000);
     });
+
+    // Handle disconnecting from the server
     socket.current.on("disconnect", () => {
       if (attemptBackup) {
         attemptBackupConnection(serverUrl);
@@ -51,6 +56,8 @@ const SecureMessaging = ({
         console.log("Failed to connect to both primary and backup servers.");
       }
     });
+
+    // Handle connection errors
     socket.current.on("connect_error", () => {
       if (attemptBackup) {
         attemptBackupConnection(serverUrl);
@@ -59,6 +66,7 @@ const SecureMessaging = ({
       }
     });
 
+    // Receive messages from the server
     socket.current.on("new_message", async (res) => {
       console.log("New message received:", res);
 
@@ -75,6 +83,7 @@ const SecureMessaging = ({
       setMessages((prevMessages) => [...prevMessages, newMessage].sort((a, b) => a.messageIndex - b.messageIndex));
     });
 
+    // Receive public keys of the other users connected to the chatroom
     socket.current.on("new_public_keys", (res) => {
       setPublicKeys((prevKeys) => new Set([...prevKeys, ...res.publicKeys]));
     });
@@ -89,11 +98,13 @@ const SecureMessaging = ({
     };
   };
 
+  // Cleanup whenever the server changes
   useEffect(() => {
     const cleanup = connectSocket(server);
     return cleanup; // Properly cleanup on component unmount or server change
   }, [server, keyPair, base64PublicKey, currChatroom]); // Reconnect whenever these dependencies change
 
+  // Send a message to the server
   const sendMessage = async (message) => {
     return await sendEncryptedMessage(
       message,
@@ -104,10 +115,12 @@ const SecureMessaging = ({
     );
   };
 
+  // Updates the input box when the user starts typing
   const handleMessageInputChange = (e) => {
     setInputMessage(e.target.value);
   };
 
+  // Called when the user submits the current message
   const handleSubmitMessage = (e) => {
     e.preventDefault();
     console.log("Sending message:", inputMessage);
@@ -115,6 +128,7 @@ const SecureMessaging = ({
     setInputMessage(""); // Clear input after sending
   };
 
+  // Attempt to connect to a backup server when disconnected from the primary server
   const attemptBackupConnection = (serverUrl) => {
     console.log(
       `Failed to connect to ${serverUrl}. Attempting backup server...`

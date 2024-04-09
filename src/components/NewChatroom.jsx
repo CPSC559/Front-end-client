@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { BACKUP_SERVER1, BACKUP_SERVER2, PRIMARY_SERVER } from "../constants";
 
+// Component that lets the user enter a code to create a new chat room
 const NewChatroom = ({
   setIsInRoom,
   base64PublicKey,
@@ -11,7 +12,6 @@ const NewChatroom = ({
 }) => {
   const [password, setPassword] = useState("");
 
-  // Updated to accept currentServer parameter
   const createChatroom = async (
     event,
     isRetry = false,
@@ -19,15 +19,17 @@ const NewChatroom = ({
   ) => {
     event.preventDefault();
 
+    // Attempt to create a new chat room with the provided password
     try {
       const response = await axios.post(`${currentServer}/chatroom`, {
         password: password,
         userPubKey: base64PublicKey,
         fromClient: true,
       });
-      setCurrChatroom(response.data.Password); // Ensure this matches your actual response structure
+      setCurrChatroom(response.data.Password);
       setIsInRoom(true);
     } catch (error) {
+      // Handle case where the server is unavailable
       console.error(
         "Failed to create chatroom:",
         error.response ? error.response.data : error.message

@@ -1,3 +1,4 @@
+// Serialize an object into a JSON string
 export function serializeUint8ArrayObject(obj) {
   return JSON.stringify(obj, (_, value) => {
     if (value instanceof Uint8Array) {
@@ -7,6 +8,7 @@ export function serializeUint8ArrayObject(obj) {
   });
 }
 
+// Deserialize a JSON string into an object
 export function deserializeUint8ArrayObject(serializedObj) {
   return JSON.parse(serializedObj, (_, value) => {
     if (Array.isArray(value)) {

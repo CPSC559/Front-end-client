@@ -1,6 +1,7 @@
 import React from "react";
 import "./MessagesView.css";
 
+// Component that displays sent and received messages
 const MessagesView = ({ messages }) => {
   return (
     <div className="messages">

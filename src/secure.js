@@ -5,15 +5,18 @@ import {
   deserializeUint8ArrayObject,
 } from "./serializationUtils";
 
+// Generate a key pair for asymmetric encryption
 export async function generateKeyPair() {
   await sodium.ready;
   return sodium.crypto_box_keypair();
 }
 
+// Generate a symmetric key for symmetric encryption
 function generateSymmetricKey() {
   return sodium.crypto_secretbox_keygen();
 }
 
+// Encrypt a message using a symmetric key and nonce
 function encryptMessage(message, symmetricKey) {
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
   const cipher = sodium.crypto_secretbox_easy(message, nonce, symmetricKey);
@@ -21,10 +24,12 @@ function encryptMessage(message, symmetricKey) {
   return { nonce, cipher };
 }
 
+// Encrypt a symmetric key using the recipient's public key
 function encryptSymmetricKey(symmetricKey, publicKey) {
   return sodium.crypto_box_seal(symmetricKey, publicKey);
 }
 
+// Decrypt a symmetric key using the recipient's key pair
 function decryptSymmetricKey(encryptedSymmetricKey, keyPair) {
   return sodium.crypto_box_seal_open(
     encryptedSymmetricKey,
@@ -33,10 +38,12 @@ function decryptSymmetricKey(encryptedSymmetricKey, keyPair) {
   );
 }
 
+// Decrypt a message using a symmetric key and nonce
 function decryptMessage(nonce, cipher, symmetricKey) {
   return sodium.crypto_secretbox_open_easy(cipher, nonce, symmetricKey, "text");
 }
 
+// Send an encrypted message to all users in the current chatroom
 export async function sendEncryptedMessage(
   message,
   publicKeys,
@@ -77,6 +84,7 @@ export async function sendEncryptedMessage(
   return serializedEncryptedMessage;
 }
 
+// Decrypt a message received from another user
 export async function decryptReceivedMessage(
   serializedEncryptedMessage,
   serializedEncryptedSymmetricKey,

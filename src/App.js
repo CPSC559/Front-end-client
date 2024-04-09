@@ -15,11 +15,10 @@ function App() {
   const [showRoomCode, setShowRoomCode] = useState(false);
 
   useEffect(() => {
-    //Key stuff
-    // TODO: load pre-exisitng key pair or generate and save it
+    // User public key
     generateKeyPair().then((keys) => {
       setKeyPair(keys);
-      // save a base64 version of the user's public key
+      // Save a base64 version of the user's public key
       setBase64PublicKey(sodium.to_base64(keys.publicKey));
     });
   }, []);

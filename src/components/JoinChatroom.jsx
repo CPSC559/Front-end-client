@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { BACKUP_SERVER1, BACKUP_SERVER2, PRIMARY_SERVER } from "../constants";
 
+// Component that lets the user enter a room code to join a room
 const JoinChatroom = ({
   setIsInRoom,
   base64PublicKey,
@@ -11,7 +12,6 @@ const JoinChatroom = ({
 }) => {
   const [password, setPassword] = useState("");
 
-  // Updated to accept currentServer parameter
   const joinChatroom = async (
     event,
     isRetry = false,
@@ -19,6 +19,7 @@ const JoinChatroom = ({
   ) => {
     event.preventDefault();
 
+    // Get the chatroom corresponding to the entered password
     try {
       const response = await axios.get(`${currentServer}/room`, {
         params: {
@@ -28,9 +29,10 @@ const JoinChatroom = ({
         },
       });
       console.log(response.data);
-      setCurrChatroom(response.data.password); // Ensure this matches your actual response structure
+      setCurrChatroom(response.data.password);
       setIsInRoom(true);
     } catch (error) {
+      // Most likely cause of failure is a room doesn't exist with that code
       console.error(
         "Failed to join chatroom:",
         error.response ? error.response.data : error.message

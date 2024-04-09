@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 
+// Input box for sending messages to the chat room
 const MessageInput = ({inputMessage, handleMessageInputChange, handleSubmitMessage}) => {
 
     return (
